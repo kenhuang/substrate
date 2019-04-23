@@ -26,6 +26,8 @@ use crate::traits::{self, Member, SimpleArithmetic, MaybeDisplay, CurrentHeight,
 	Checkable, Extrinsic};
 use super::{CheckedExtrinsic, Era};
 
+use runtime_io::print;
+
 const TRANSACTION_VERSION: u8 = 1;
 
 /// A extrinsic right from the external world. This is unchecked and so
@@ -82,6 +84,7 @@ where
 	type Checked = CheckedExtrinsic<AccountId, Index, Call>;
 
 	fn check(self, context: &Context) -> Result<Self::Checked, &'static str> {
+		print("here------------");
 		Ok(match self.signature {
 			Some((signed, signature, index, era)) => {
 				let h = context.block_number_to_hash(BlockNumber::sa(era.birth(context.current_height().as_())))
@@ -90,8 +93,10 @@ where
 				let raw_payload = (index, self.function, era, h);
 				if !raw_payload.using_encoded(|payload| {
 					if payload.len() > 256 {
+						print("> 256");
 						signature.verify(&blake2_256(payload)[..], &signed)
 					} else {
+						print("<= 256");
 						signature.verify(payload, &signed)
 					}
 				}) {
@@ -119,6 +124,7 @@ where
 	Call: Decode,
 {
 	fn decode<I: Input>(input: &mut I) -> Option<Self> {
+		print("decoding!");
 		// This is a little more complicated than usual since the binary format must be compatible
 		// with substrate's generic `Vec<u8>` type. Basically this just means accepting that there
 		// will be a prefix of vector length (we don't need

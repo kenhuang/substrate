@@ -90,6 +90,7 @@ pub fn run<I, T, E>(args: I, exit: E, version: cli::VersionInfo) -> error::Resul
 			let runtime = RuntimeBuilder::new().name_prefix("main-tokio-").build()
 				.map_err(|e| format!("{:?}", e))?;
 			let executor = runtime.executor();
+			// eprintln!("config: {:?}", config);
 			match config.roles {
 				ServiceRoles::LIGHT => run_until_exit(
 					runtime,

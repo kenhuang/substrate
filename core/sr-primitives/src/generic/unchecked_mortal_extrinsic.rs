@@ -25,6 +25,7 @@ use crate::codec::{Decode, Encode, Input};
 use crate::traits::{self, Member, SimpleArithmetic, MaybeDisplay, CurrentHeight, BlockNumberToHash, Lookup,
 	Checkable, Extrinsic};
 use super::{CheckedExtrinsic, Era};
+use runtime_io::print;
 
 const TRANSACTION_VERSION: u8 = 1;
 
@@ -81,6 +82,7 @@ where
 	type Checked = CheckedExtrinsic<AccountId, Index, Call>;
 
 	fn check(self, context: &Context) -> Result<Self::Checked, &'static str> {
+		print("2 here------------");
 		Ok(match self.signature {
 			Some((signed, signature, index, era)) => {
 				let h = context.block_number_to_hash(BlockNumber::sa(era.birth(context.current_height().as_())))
@@ -119,6 +121,7 @@ where
 	Call: Decode,
 {
 	fn decode<I: Input>(input: &mut I) -> Option<Self> {
+		print("decoding 3");
 		// This is a little more complicated than usual since the binary format must be compatible
 		// with substrate's generic `Vec<u8>` type. Basically this just means accepting that there
 		// will be a prefix of vector length (we don't need

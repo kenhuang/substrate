@@ -21,16 +21,38 @@ use futures::Future;
 use log::{info, warn};
 
 use runtime_primitives::generic::{SignedBlock, BlockId};
-use runtime_primitives::traits::{As, Block, Header, NumberFor};
+use runtime_primitives::generic::Era;
+use runtime_primitives::traits::{As, Block, Header, NumberFor, ProvideRuntimeApi, BlockNumberToHash};
+use primitives::{ed25519, sr25519};
 use consensus_common::import_queue::{ImportQueue, IncomingBlock, Link};
+use consensus_common::ForkChoiceStrategy;
+use std::collections::HashMap;
+use consensus_common::ImportBlock;
 use network::message;
+use node_runtime::{Call, Runtime, Balances, UncheckedExtrinsic, CheckedExtrinsic};
+use sr_io;
+use primitives::crypto::Pair;
+
+use keyring::ed25519::Keyring;
+use balances::Call as BalancesCall;
+use runtime_primitives::OpaqueExtrinsic;
+use indices;
 
 use consensus_common::BlockOrigin;
-use crate::components::{self, Components, ServiceFactory, FactoryFullConfiguration, FactoryBlockNumber, RuntimeGenesis};
-use crate::new_client;
+use crate::components::{self, Components, ServiceFactory, FactoryFullConfiguration, FactoryBlockNumber, RuntimeGenesis, FullClient};
+use crate::{new_client, FactoryBlock};
 use parity_codec::{Decode, Encode};
 use crate::error;
 use crate::chain_spec::ChainSpec;
+use client::runtime_api::ConstructRuntimeApi;
+use std::sync::Arc;
+
+use client::Client;
+use client::LocalCallExecutor;
+use substrate_executor::NativeExecutor;
+use client::blockchain::Backend;
+use consensus_common::block_import::BlockImport;
+use client::block_builder::api::BlockBuilder;
 
 /// Export a range of blocks to a binary stream.
 pub fn export_blocks<F, E, W>(
@@ -206,6 +228,71 @@ pub fn revert_chain<F>(
 	} else {
 		info!("Reverted {} blocks. Best: #{} ({})", reverted, info.best_number, info.best_hash);
 	}
+	Ok(())
+}
+
+/// Factory
+pub fn factory<F>(
+	config: FactoryFullConfiguration<F>,
+	blocks: FactoryBlockNumber<F>
+) -> error::Result<()>
+	where
+		F: ServiceFactory,
+		F::RuntimeApi: ConstructRuntimeApi<FactoryBlock<F>, FullClient<F>>,
+		FullClient<F>: ProvideRuntimeApi,
+		<FullClient<F> as ProvideRuntimeApi>::Api: BlockBuilder<FactoryBlock<F>>
+{
+	let client = new_client::<F>(&config)?;
+
+	let alice: ed25519::Pair = Keyring::Alice.into();
+	let bob: ed25519::Pair = Keyring::Bob.into();
+
+	let to = sr25519::Public::from_slice(&bob.public().0);
+	let payload = (0,
+				   Call::Balances(
+					   BalancesCall::transfer(
+						   indices::address::Address::Id(
+							   to
+						   ),
+						   1337
+					   )
+				   ),
+				   Era::immortal(),
+				   client.genesis_hash()
+	);
+
+	let signature = alice.sign(&payload.encode()).into();
+	let id = sr25519::Public::from_slice(&alice.public().0);
+
+	let uxt = UncheckedExtrinsic {
+		signature: Some((indices::address::Address::Id(id), signature, payload.0.into(), Era::immortal())),
+		function: payload.clone().1,
+	}.encode();
+
+	let xt =
+		<<F as ServiceFactory>::Block as runtime_primitives::traits::Block>::Extrinsic::decode(&mut uxt.as_slice())
+		.unwrap();
+
+	let mut block = client.new_block().unwrap();
+
+	// the following push results in:
+	// panicked at 'called `Result::unwrap()` on an `Err` value: ApplyExtrinsicFailed(BadSignature)'
+	block.push(xt).unwrap();
+
+	let block = block.bake().unwrap();
+
+	let import = ImportBlock {
+		origin: BlockOrigin::File,
+		header: block.header().clone(),
+		justification: None,
+		post_digests: Vec::new(),
+		body: Some(block.extrinsics().to_vec()),
+		finalized: false,
+		auxiliary: Vec::new(),
+		fork_choice: ForkChoiceStrategy::LongestChain,
+	};
+	client.import_block(import, HashMap::new()).unwrap();
+
 	Ok(())
 }
 

@@ -24,6 +24,8 @@ use crate::codec::{Decode, Encode, Codec, Input, HasCompact};
 use crate::traits::{self, Member, SimpleArithmetic, MaybeDisplay, Lookup, Extrinsic};
 use super::CheckedExtrinsic;
 
+use runtime_io::print;
+
 #[derive(PartialEq, Eq, Clone, Encode, Decode)]
 pub struct SignatureContent<Address, Index, Signature>
 where
@@ -88,6 +90,7 @@ where
 	type Checked = CheckedExtrinsic<AccountId, Index, Call>;
 
 	fn check(self, context: &Context) -> Result<Self::Checked, &'static str> {
+		print("1 here------------");
 		Ok(match self.signature {
 			Some(SignatureContent{signed, signature, index}) => {
 				let payload = (index, self.function);
@@ -123,6 +126,7 @@ impl<Address: Codec, Index: HasCompact + Codec, Signature: Codec, Call: Decode> 
 	for UncheckedExtrinsic<Address, Index, Call, Signature>
 {
 	fn decode<I: Input>(input: &mut I) -> Option<Self> {
+		print("decoding 2");
 		// This is a little more complicated than usual since the binary format must be compatible
 		// with substrate's generic `Vec<u8>` type. Basically this just means accepting that there
 		// will be a prefix of vector length (we don't need
