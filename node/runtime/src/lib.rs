@@ -31,6 +31,7 @@ use client::{
 	block_builder::api::{self as block_builder_api, InherentData, CheckInherentsResult},
 	runtime_api as client_api, impl_runtime_apis
 };
+use runtime_io::print;
 use runtime_primitives::{ApplyResult, generic, create_runtime_str};
 use runtime_primitives::transaction_validity::TransactionValidity;
 use runtime_primitives::traits::{
@@ -278,6 +279,8 @@ impl_runtime_apis! {
 
 	impl block_builder_api::BlockBuilder<Block> for Runtime {
 		fn apply_extrinsic(extrinsic: <Block as BlockT>::Extrinsic) -> ApplyResult {
+			print("7 tada\n");
+			panic!("7 tada\n");
 			Executive::apply_extrinsic(extrinsic)
 		}
 

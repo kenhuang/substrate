@@ -26,6 +26,7 @@ finality-tracker = { package = "srml-finality-tracker", path = "../../srml/final
 grandpa = { package = "srml-grandpa", path = "../../srml/grandpa", default-features = false }
 indices = { package = "srml-indices", path = "../../srml/indices", default-features = false }
 session = { package = "srml-session", path = "../../srml/session", default-features = false }
+runtime-io = { package = "sr-io", path = "../../core/sr-io", default_features = false }
 staking = { package = "srml-staking", path = "../../srml/staking", default-features = false }
 system = { package = "srml-system", path = "../../srml/system", default-features = false }
 timestamp = { package = "srml-timestamp", path = "../../srml/timestamp", default-features = false }

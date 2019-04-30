@@ -23,6 +23,7 @@ use client::{
 use version::RuntimeVersion;
 #[cfg(feature = "std")]
 use version::NativeVersion;
+use runtime_io::print;
 
 // A few exports that help ease life for downstream crates.
 #[cfg(any(feature = "std", test))]
@@ -255,6 +256,7 @@ impl_runtime_apis! {
 
 	impl block_builder_api::BlockBuilder<Block> for Runtime {
 		fn apply_extrinsic(extrinsic: <Block as BlockT>::Extrinsic) -> ApplyResult {
+			print("8 tada\n");
 			Executive::apply_extrinsic(extrinsic)
 		}
 

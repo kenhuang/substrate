@@ -146,6 +146,7 @@ impl executive::ExecuteBlock<Block> for BlockExecutor {
 /// Execute a transaction outside of the block execution function.
 /// This doesn't attempt to validate anything regarding the block.
 pub fn validate_transaction(utx: Extrinsic) -> TransactionValidity {
+	panic!("132");
 	if check_signature(&utx).is_err() {
 		return TransactionValidity::Invalid(ApplyError::BadSignature as i8);
 	}
@@ -225,6 +226,7 @@ pub fn finalize_block() -> Header {
 #[inline(always)]
 fn check_signature(utx: &Extrinsic) -> Result<(), ApplyError> {
 	use runtime_primitives::traits::BlindCheckable;
+	panic!("132 89");
 	utx.clone().check().map_err(|_| ApplyError::BadSignature)?;
 	Ok(())
 }

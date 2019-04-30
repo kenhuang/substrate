@@ -227,6 +227,7 @@ mod tests {
 			let payload = (0, Call::Balances(BalancesCall::transfer(RawAddress::Id(bob.public().0.into()), 69.into())), Era::immortal(), service.client().genesis_hash());
 			let signature = alice.sign(&payload.encode()).into();
 			let id = alice.public().0.into();
+			eprintln!("id: {:?}", id);
 			let xt = UncheckedExtrinsic {
 				signature: Some((RawAddress::Id(id), signature, payload.0, Era::immortal())),
 				function: payload.1,

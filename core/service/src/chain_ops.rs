@@ -22,7 +22,8 @@ use log::{info, warn};
 
 use runtime_primitives::generic::{SignedBlock, BlockId};
 use runtime_primitives::generic::Era;
-use runtime_primitives::traits::{As, Block, Header, NumberFor, ProvideRuntimeApi, BlockNumberToHash};
+use runtime_primitives::traits::{As, Block, Header, NumberFor, ProvideRuntimeApi, BlockNumberToHash, Extrinsic};
+use runtime_primitives::OpaqueExtrinsic;
 use primitives::{ed25519, sr25519};
 use consensus_common::import_queue::{ImportQueue, IncomingBlock, Link};
 use consensus_common::ForkChoiceStrategy;
@@ -34,8 +35,8 @@ use sr_io;
 use primitives::crypto::Pair;
 
 use keyring::ed25519::Keyring;
+use keyring::sr25519::Keyring as srKeyring;
 use balances::Call as BalancesCall;
-use runtime_primitives::OpaqueExtrinsic;
 use indices;
 
 use consensus_common::BlockOrigin;
@@ -243,6 +244,8 @@ pub fn factory<F>(
 		<FullClient<F> as ProvideRuntimeApi>::Api: BlockBuilder<FactoryBlock<F>>
 {
 	let client = new_client::<F>(&config)?;
+
+	let api = client.runtime_api();
 
 	let alice: ed25519::Pair = Keyring::Alice.into();
 	let bob: ed25519::Pair = Keyring::Bob.into();

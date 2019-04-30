@@ -2062,6 +2062,7 @@ dependencies = [
  "rustc-hex 2.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "safe-mix 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.90 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sr-io 1.0.0",
  "sr-primitives 1.0.0",
  "sr-std 1.0.0",
  "sr-version 1.0.0",
