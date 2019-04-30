@@ -84,7 +84,6 @@ where
 	type Checked = CheckedExtrinsic<AccountId, Index, Call>;
 
 	fn check(self, context: &Context) -> Result<Self::Checked, &'static str> {
-		print("here------------");
 		Ok(match self.signature {
 			Some((signed, signature, index, era)) => {
 				let h = context.block_number_to_hash(BlockNumber::sa(era.birth(context.current_height().as_())))

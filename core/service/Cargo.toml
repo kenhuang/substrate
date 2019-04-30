@@ -34,6 +34,7 @@ offchain = { package = "substrate-offchain", path = "../../core/offchain" }
 keyring = { package = "substrate-keyring", path = "../../core/keyring" }
 balances = { package = "srml-balances", path = "../../srml/balances", default-features = false }
 node-runtime = { path = "../../node/runtime" }
+node-primitives = { path = "../../node/primitives" }
 indices = { package = "srml-indices", path = "../../srml/indices" }
 basic-authorship = { package = "substrate-basic-authorship", path = "../../core/basic-authorship" }
 

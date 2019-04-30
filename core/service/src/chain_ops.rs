@@ -247,40 +247,51 @@ pub fn factory<F>(
 
 	let api = client.runtime_api();
 
-	let alice: ed25519::Pair = Keyring::Alice.into();
-	let bob: ed25519::Pair = Keyring::Bob.into();
+	let alice: node_primitives::AccountId = srKeyring::Alice.into();
+	let bob: node_primitives::AccountId = srKeyring::Bob.into();
 
-	let to = sr25519::Public::from_slice(&bob.public().0);
-	let payload = (0,
-				   Call::Balances(
+    fn sign<F: ServiceFactory>(xt: CheckedExtrinsic, client: &FullClient<F>) -> UncheckedExtrinsic {
+		match xt.signed {
+			Some((signed, index)) => {
+				let era = Era::mortal(256, 0);
+				let payload = (index.into(), xt.function, era, client.genesis_hash());
+				let key = srKeyring::from_public(&signed).unwrap();
+				let signature = payload.using_encoded(|b| {
+					if b.len() > 256 {
+						key.sign(&sr_io::blake2_256(b))
+					} else {
+						key.sign(b)
+					}
+				}).into();
+				UncheckedExtrinsic {
+					signature: Some((indices::address::Address::Id(signed), signature, payload.0, era)),
+					function: payload.1,
+				}
+			}
+			None => UncheckedExtrinsic {
+				signature: None,
+				function: xt.function,
+			},
+		}
+	}
+
+    let xt = sign::<F>(CheckedExtrinsic {
+		signed: Some((alice.into(), 0)),
+		function: Call::Balances(
 					   BalancesCall::transfer(
 						   indices::address::Address::Id(
-							   to
+							   bob.into(),
 						   ),
 						   1337
 					   )
 				   ),
-				   Era::immortal(),
-				   client.genesis_hash()
-	);
-
-	let signature = alice.sign(&payload.encode()).into();
-	let id = sr25519::Public::from_slice(&alice.public().0);
-
-	let uxt = UncheckedExtrinsic {
-		signature: Some((indices::address::Address::Id(id), signature, payload.0.into(), Era::immortal())),
-		function: payload.clone().1,
-	}.encode();
-
-	let xt =
-		<<F as ServiceFactory>::Block as runtime_primitives::traits::Block>::Extrinsic::decode(&mut uxt.as_slice())
-		.unwrap();
+	}, &*client);
 
 	let mut block = client.new_block().unwrap();
 
 	// the following push results in:
 	// panicked at 'called `Result::unwrap()` on an `Err` value: ApplyExtrinsicFailed(BadSignature)'
-	block.push(xt).unwrap();
+	block.push(Decode::decode(&mut &xt.encode()[..]).unwrap()).unwrap();
 
 	let block = block.bake().unwrap();
 
